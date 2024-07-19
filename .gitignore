@@ -1,0 +1,9 @@
+# Distribution / packaging
+
+__pycache__/
+.vscode/
+
+MANIFEST
+.idea/
+rust/target/
+
