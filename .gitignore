@@ -6,4 +6,6 @@ __pycache__/
 MANIFEST
 .idea/
 rust/target/
+rust/Cargo.lock
+
 
