@@ -74,8 +74,8 @@ public class SocketUTransport implements UTransport {
 
 
     /**
-     * Listens for incoming messages on the socket input stream from the dispatcher.
-     * Processes messages and invokes corresponding handler methods.
+     * Listens for incoming UMessages from the Dispatcher.
+     * Processes the incoming data if the listener is registered with a UMessage source and sink UURI filter.
      */
     private void listen() {
         try {
@@ -194,7 +194,7 @@ public class SocketUTransport implements UTransport {
      * @param sourceFilter The URI filter for the source.
      * @param sinkFilter The URI filter for the sink.
      * @param listener The listener to be registered.
-     * @return A status indicating the outcome of the registration operation.
+     * @return A status indicating the outcome of the register listener operation.
      */
     public CompletionStage<UStatus> registerListener(UUri sourceFilter, UUri sinkFilter, UListener listener) {
         addListener(sourceFilter, sinkFilter, listener);
@@ -208,7 +208,7 @@ public class SocketUTransport implements UTransport {
      * @param sourceFilter The URI filter for the source.
      * @param sinkFilter The URI filter for the sink.
      * @param listener The listener to be removed.
-     * @return A status indicating the outcome of the unregistration operation.
+     * @return A status indicating the outcome of the unregister listener operation.
      */
     public CompletionStage<UStatus> unregisterListener(UUri sourceFilter, UUri sinkFilter, UListener listener) {
         UStatus status = removeListener(sourceFilter, sinkFilter);

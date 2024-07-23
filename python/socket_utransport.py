@@ -11,6 +11,7 @@ terms of the Apache License Version 2.0 which is available at
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import asyncio
 import logging
 import socket
@@ -33,13 +34,26 @@ DISPATCHER_ADDR: tuple = ("127.0.0.1", 44444)
 BYTES_MSG_LENGTH: int = 32767
 
 
-def get_uuri_string(uri) -> str:
+def get_uuri_string(uri: UUri) -> str:
+    """
+     Serializes the UUri
+    :param uri:  to serialize
+    :return: Serialized uri string
+    """
     if uri is None:
         return ''
     return UriSerializer.serialize(uri)
 
 
 def matches(source: str, sink: str, attributes):
+    """
+    Matches the given attributes with the source and sink URIs.
+
+    :param source: The source Uri to match.
+    :param sink: The sink Uri to match.
+    :param attributes: The attributes to match.
+    :return: Returns True if the attributes match the source and sink URIs.
+    """
     if attributes is None:
         return False
     source = UriSerializer.deserialize(source)
@@ -49,14 +63,15 @@ def matches(source: str, sink: str, attributes):
     elif sink == UriFactory.ANY:
         return UriValidator.matches(source, attributes.source)
     else:
-        return (UriValidator.matches(source, attributes.source) and
-                UriValidator.matches(sink, attributes.sink))
+        return UriValidator.matches(source, attributes.source) and UriValidator.matches(sink, attributes.sink)
 
 
 class SocketUTransport(UTransport):
     def __init__(self, source: UUri):
         """
-        Creates a uEntity with Socket Connection, as well as a map of registered topics.
+        Initializes a SocketUTransport instance and establishes a connection to the dispatcher.
+        Sets up the socket and begins listening for incoming messages asynchronously.
+
         param source: The URI associated with the UTransport.
         """
 
@@ -70,8 +85,8 @@ class SocketUTransport(UTransport):
 
     def __listen(self):
         """
-        Listens to UMessages incoming from the Dispatcher.
-        Handles incoming data if the Socket_UTransporter is registered to a UUri topic.
+        Listens to incoming UMessages from the Dispatcher.
+        Processes incoming data if the listener is registered to a UMessage source and sink UURI filter.
         """
         while True:
             try:
@@ -95,7 +110,11 @@ class SocketUTransport(UTransport):
 
     def _notify_listeners(self, umsg):
         """
-        Notifies listeners registered to the given source and sink uri filters about the incoming message.
+        Notifies listeners registered for the source and sink URI filters about the incoming message.
+        The message is matched against the registered URI filters, and the appropriate listeners are
+        invoked asynchronously.
+
+        :param umsg: The message to be processed and dispatched to listeners.
         """
 
         with self.lock:
@@ -114,6 +133,9 @@ class SocketUTransport(UTransport):
     async def send(self, message: UMessage) -> UStatus:
         """
         Sends the provided UMessage over the socket connection.
+
+        :param message: The UMessage to be sent.
+        :return: A status indicating the outcome of the send operation.
         """
         umsg_serialized: bytes = message.SerializeToString()
         try:
@@ -127,7 +149,12 @@ class SocketUTransport(UTransport):
 
     async def register_listener(self, source_filter: UUri, listener: UListener, sink_filer: UUri = None) -> UStatus:
         """
-        Registers a listener for the specified source and sink filter
+        Registers the specified listener for the given source and sink URI filters.
+
+        :param source_filter: The URI filter for the source.
+        :param listener: The listener to be registered.
+        :param sink_filer: The URI filter for the sink.
+        :return: A status indicating the outcome of the register listener operation.
         """
         source_uri = get_uuri_string(source_filter)
         sink_uri = get_uuri_string(sink_filer)
@@ -137,7 +164,12 @@ class SocketUTransport(UTransport):
 
     async def unregister_listener(self, source_filter: UUri, listener: UListener, sink_filer: UUri = None) -> UStatus:
         """
-        Unregisters a listener for the specified source and sink filter
+        Unregisters the specified listener from the given source and sink URI filters.
+
+        :param source_filter: The URI filter for the source.
+        :param listener: The listener to be removed.
+        :param sink_filer: The URI filter for the sink.
+        :return: A status indicating the outcome of the unregister listener operation.
         """
 
         source_uri = get_uuri_string(source_filter)
@@ -145,7 +177,7 @@ class SocketUTransport(UTransport):
 
         listener = self.uri_to_listener.pop((source_uri, sink_uri), None)
         if listener:
-            return UStatus(code=UCode.OK, message="OK")
+            return UStatus(code=UCode.OK, message="Listener removed successfully")
         else:
             return UStatus(code=UCode.NOT_FOUND, message="Listener not found for the given UUri")
 
@@ -157,7 +189,7 @@ class SocketUTransport(UTransport):
 
     def close(self):
         """
-        Closes the socket connection.
+        Closes the socket connection and releases any resources associated with it..
         """
         self.socket.close()
         logger.info(f"{self.__class__.__name__} Socket Connection Closed")
